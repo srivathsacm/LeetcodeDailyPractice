@@ -1,0 +1,10 @@
+class Solution {
+    public int countPartitions(int[] nums) {
+        long total = 0;
+        for (int x : nums) total += x;
+
+        if ((total & 1) == 1) return 0;  // total sum odd → no valid partitions
+
+        return nums.length - 1;  // all partitions are valid
+    }
+}
