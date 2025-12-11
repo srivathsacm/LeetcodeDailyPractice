@@ -1,0 +1,44 @@
+class Solution {
+    public int countCoveredBuildings(int n, int[][] buildings) {
+        int m = buildings.length;
+
+        int[] rowMin = new int[n + 1];
+        int[] rowMax = new int[n + 1];
+        int[] colMin = new int[n + 1];
+        int[] colMax = new int[n + 1];
+
+        // Initialize min/max tracking
+        for (int i = 1; i <= n; i++) {
+            rowMin[i] = colMin[i] = Integer.MAX_VALUE;
+            rowMax[i] = colMax[i] = Integer.MIN_VALUE;
+        }
+
+        // Record min/max in each row and column
+        for (int[] b : buildings) {
+            int x = b[0], y = b[1];
+            rowMin[x] = Math.min(rowMin[x], y);
+            rowMax[x] = Math.max(rowMax[x], y);
+
+            colMin[y] = Math.min(colMin[y], x);
+            colMax[y] = Math.max(colMax[y], x);
+        }
+
+        int covered = 0;
+
+        // Check each building for coverage
+        for (int[] b : buildings) {
+            int x = b[0], y = b[1];
+
+            boolean hasLeft = rowMin[x] < y;
+            boolean hasRight = rowMax[x] > y;
+            boolean hasAbove = colMin[y] < x;
+            boolean hasBelow = colMax[y] > x;
+
+            if (hasLeft && hasRight && hasAbove && hasBelow) {
+                covered++;
+            }
+        }
+
+        return covered;
+    }
+}
