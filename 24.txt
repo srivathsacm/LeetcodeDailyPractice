@@ -1,0 +1,51 @@
+class Solution {
+    public int[] countMentions(int numberOfUsers, List<List<String>> events) {
+        int n = numberOfUsers;
+        int[] mentions = new int[n];
+        int[] offlineUntil = new int[n];
+
+        // Sort by timestamp, OFFLINE before MESSAGE if same time
+        events.sort((a, b) -> {
+            int t1 = Integer.parseInt(a.get(1));
+            int t2 = Integer.parseInt(b.get(1));
+            if (t1 != t2) return t1 - t2;
+            // OFFLINE before MESSAGE at same timestamp
+            return a.get(0).equals("OFFLINE") ? -1 : 1;
+        });
+
+        for (List<String> e : events) {
+            String type = e.get(0);
+            int t = Integer.parseInt(e.get(1));
+
+            // Update users who come online
+            for (int i = 0; i < n; i++) {
+                if (offlineUntil[i] != 0 && offlineUntil[i] <= t) {
+                    offlineUntil[i] = 0;
+                }
+            }
+
+            if (type.equals("OFFLINE")) {
+                int id = Integer.parseInt(e.get(2));
+                offlineUntil[id] = t + 60;
+            } else {
+                String msg = e.get(2);
+
+                if (msg.equals("ALL")) {
+                    for (int i = 0; i < n; i++) mentions[i]++;
+                } else if (msg.equals("HERE")) {
+                    for (int i = 0; i < n; i++) {
+                        if (offlineUntil[i] == 0) mentions[i]++;
+                    }
+                } else {
+                    String[] parts = msg.split(" ");
+                    for (String p : parts) {
+                        int id = Integer.parseInt(p.substring(2));
+                        mentions[id]++;
+                    }
+                }
+            }
+        }
+
+        return mentions;
+    }
+}
