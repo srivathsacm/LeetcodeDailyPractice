@@ -1,0 +1,40 @@
+class Solution {
+    Map<String, List<Character>> map = new HashMap<>();
+    Set<String> memo = new HashSet<>();
+
+    public boolean pyramidTransition(String bottom, List<String> allowed) {
+        for (String s : allowed) {
+            map.computeIfAbsent(s.substring(0, 2), k -> new ArrayList<>()).add(s.charAt(2));
+        }
+        return dfs(bottom);
+    }
+
+    boolean dfs(String row) {
+        if (row.length() == 1) return true;
+        if (memo.contains(row)) return false;
+
+        List<String> nextRows = new ArrayList<>();
+        build(row, 0, new StringBuilder(), nextRows);
+
+        for (String next : nextRows) {
+            if (dfs(next)) return true;
+        }
+
+        memo.add(row);
+        return false;
+    }
+
+    void build(String row, int i, StringBuilder sb, List<String> res) {
+        if (i == row.length() - 1) {
+            res.add(sb.toString());
+            return;
+        }
+        String key = row.substring(i, i + 2);
+        if (!map.containsKey(key)) return;
+        for (char c : map.get(key)) {
+            sb.append(c);
+            build(row, i + 1, sb, res);
+            sb.deleteCharAt(sb.length() - 1);
+        }
+    }
+}
