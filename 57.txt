@@ -1,0 +1,79 @@
+import java.util.*;
+
+class Solution {
+    static class Event {
+        long y, x1, x2;
+        int type;
+        Event(long y, int type, long x1, long x2) {
+            this.y = y;
+            this.type = type;
+            this.x1 = x1;
+            this.x2 = x2;
+        }
+    }
+
+    public double separateSquares(int[][] squares) {
+        List<Event> events = new ArrayList<>();
+        for (int[] s : squares) {
+            long x = s[0], y = s[1], l = s[2];
+            events.add(new Event(y, 1, x, x + l));
+            events.add(new Event(y + l, -1, x, x + l));
+        }
+
+        events.sort(Comparator.comparingLong(e -> e.y));
+
+        TreeMap<Long, Integer> map = new TreeMap<>();
+        List<long[]> segments = new ArrayList<>();
+
+        long prevY = events.get(0).y;
+        double areaSoFar = 0;
+
+        for (Event e : events) {
+            long curY = e.y;
+            if (curY > prevY) {
+                long coveredX = unionLength(map);
+                if (coveredX > 0) {
+                    segments.add(new long[]{prevY, curY, coveredX});
+                }
+            }
+
+            map.put(e.x1, map.getOrDefault(e.x1, 0) + e.type);
+            map.put(e.x2, map.getOrDefault(e.x2, 0) - e.type);
+
+            if (map.get(e.x1) == 0) map.remove(e.x1);
+            if (map.get(e.x2) == 0) map.remove(e.x2);
+
+            prevY = curY;
+        }
+
+        double totalArea = 0;
+        for (long[] s : segments) {
+            totalArea += (double)(s[1] - s[0]) * s[2];
+        }
+
+        double target = totalArea / 2.0;
+        double acc = 0;
+
+        for (long[] s : segments) {
+            double segArea = (double)(s[1] - s[0]) * s[2];
+            if (acc + segArea >= target) {
+                return s[0] + (target - acc) / s[2];
+            }
+            acc += segArea;
+        }
+
+        return 0;
+    }
+
+    long unionLength(TreeMap<Long, Integer> map) {
+        long res = 0, prev = 0;
+        int cnt = 0;
+        for (var e : map.entrySet()) {
+            long x = e.getKey();
+            if (cnt > 0) res += x - prev;
+            cnt += e.getValue();
+            prev = x;
+        }
+        return res;
+    }
+}
