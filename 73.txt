@@ -1,0 +1,101 @@
+import java.util.*;
+
+class Solution {
+
+    static class TrieNode {
+        TrieNode[] next = new TrieNode[26];
+        int id = -1;
+    }
+
+    public long minimumCost(String source, String target,
+                            String[] original, String[] changed, int[] cost) {
+
+        long INF = (long) 4e18;
+        int n = source.length();
+
+        // Step 1: Map all strings
+        HashMap<String, Integer> map = new HashMap<>();
+        int idx = 0;
+
+        for (String s : original)
+            if (!map.containsKey(s)) map.put(s, idx++);
+
+        for (String s : changed)
+            if (!map.containsKey(s)) map.put(s, idx++);
+
+        int m = idx;
+
+        // Step 2: Floyd Warshall shortest conversion cost
+        long[][] dist = new long[m][m];
+        for (int i = 0; i < m; i++) {
+            Arrays.fill(dist[i], INF);
+            dist[i][i] = 0;
+        }
+
+        for (int i = 0; i < cost.length; i++) {
+            int u = map.get(original[i]);
+            int v = map.get(changed[i]);
+            dist[u][v] = Math.min(dist[u][v], cost[i]);
+        }
+
+        for (int k = 0; k < m; k++)
+            for (int i = 0; i < m; i++)
+                for (int j = 0; j < m; j++)
+                    if (dist[i][k] + dist[k][j] < dist[i][j])
+                        dist[i][j] = dist[i][k] + dist[k][j];
+
+        // Step 3: Build Trie of original strings
+        TrieNode root = new TrieNode();
+        for (String s : map.keySet()) {
+            if (!isInOriginal(s, original)) continue;
+
+            TrieNode cur = root;
+            for (char ch : s.toCharArray()) {
+                int c = ch - 'a';
+                if (cur.next[c] == null) cur.next[c] = new TrieNode();
+                cur = cur.next[c];
+            }
+            cur.id = map.get(s);
+        }
+
+        // Step 4: DP
+        long[] dp = new long[n + 1];
+        Arrays.fill(dp, INF);
+        dp[n] = 0;
+
+        for (int i = n - 1; i >= 0; i--) {
+
+            if (source.charAt(i) == target.charAt(i))
+                dp[i] = dp[i + 1];
+
+            TrieNode cur = root;
+
+            for (int j = i; j < n; j++) {
+                int c = source.charAt(j) - 'a';
+                if (cur.next[c] == null) break;
+                cur = cur.next[c];
+
+                if (cur.id != -1) {
+                    int srcId = cur.id;
+
+                    String tgtSub = target.substring(i, j + 1);
+                    if (!map.containsKey(tgtSub)) continue;
+
+                    int tgtId = map.get(tgtSub);
+
+                    long convCost = dist[srcId][tgtId];
+                    if (convCost < INF)
+                        dp[i] = Math.min(dp[i], convCost + dp[j + 1]);
+                }
+            }
+        }
+
+        return dp[0] >= INF ? -1 : dp[0];
+    }
+
+    private boolean isInOriginal(String s, String[] original) {
+        for (String o : original)
+            if (o.equals(s)) return true;
+        return false;
+    }
+}
