@@ -1,0 +1,76 @@
+import java.util.*;
+
+class Solution {
+    TreeMap<Integer, Integer> left = new TreeMap<>();
+    TreeMap<Integer, Integer> right = new TreeMap<>();
+    long leftSum = 0;
+    int leftSize = 0;
+
+    public long minimumCost(int[] nums, int k, int dist) {
+        int n = nums.length;
+        int need = k - 1;
+        long ans = Long.MAX_VALUE;
+
+        for (int i = 1; i <= dist + 1; i++) add(right, nums[i]);
+
+        rebalance(need);
+        ans = nums[0] + leftSum;
+
+        for (int i = 2; i < n; i++) {
+            int removeVal = nums[i - 1];
+            if (left.containsKey(removeVal)) {
+                remove(left, removeVal);
+                leftSum -= removeVal;
+                leftSize--;
+            } else {
+                remove(right, removeVal);
+            }
+
+            int addIdx = i + dist;
+            if (addIdx < n) add(right, nums[addIdx]);
+
+            rebalance(need);
+
+            if (leftSize == need) {
+                ans = Math.min(ans, nums[0] + leftSum);
+            }
+        }
+        return ans;
+    }
+
+    void rebalance(int need) {
+        while (leftSize < need && !right.isEmpty()) {
+            int x = right.firstKey();
+            remove(right, x);
+            add(left, x);
+            leftSum += x;
+            leftSize++;
+        }
+        while (leftSize > need) {
+            int x = left.lastKey();
+            remove(left, x);
+            add(right, x);
+            leftSum -= x;
+            leftSize--;
+        }
+        if (!left.isEmpty() && !right.isEmpty() && left.lastKey() > right.firstKey()) {
+            int a = left.lastKey();
+            int b = right.firstKey();
+            remove(left, a);
+            remove(right, b);
+            add(left, b);
+            add(right, a);
+            leftSum += b - a;
+        }
+    }
+
+    void add(TreeMap<Integer, Integer> map, int x) {
+        map.put(x, map.getOrDefault(x, 0) + 1);
+    }
+
+    void remove(TreeMap<Integer, Integer> map, int x) {
+        int c = map.get(x);
+        if (c == 1) map.remove(x);
+        else map.put(x, c - 1);
+    }
+}
